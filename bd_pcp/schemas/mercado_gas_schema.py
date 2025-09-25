@@ -9,10 +9,9 @@ class MercadoGasBase(BaseModel):
     ABA: str = Field(..., max_length=100, example="HISTÓRICO CONSOLIDAÇÃO - GLP")
     PRODUTO: str = Field(..., max_length=100, example="GLP")
     LOCAL: Optional[str] = Field(None, max_length=100, example="3R Petroleum-EF-470.006")
-    DESCRICAO: Optional[str] = Field(None, max_length=255, example="Potiguar E&P - EF-470.004 - Volume de Retirada Carreta")
+    EMPRESA: Optional[str] = Field(None, max_length=255, example="Potiguar E&P - EF-470.004")
     UNIDADE: str = Field(..., max_length=20, example="ton")
     VALOR: float = Field(..., example="2.44")
-    DENSIDADE: Optional[float] = Field(None, example="0.55")
 
 class MercadoGasCriacao(MercadoGasBase):
     """Schema para criação de MercadoGas"""
@@ -25,10 +24,9 @@ class MercadoGasAtualizacao(MercadoGasBase):
     ABA: Optional[str] = Field(None, max_length=100, description="Nome da aba")
     PRODUTO: Optional[str] = Field(None, max_length=100, description="Nome do produto")
     LOCAL: Optional[str] = Field(None, max_length=100, description="Local do produto")
-    DESCRICAO: Optional[str] = Field(None, max_length=255, description="Descrição")
+    EMPRESA: Optional[str] = Field(None, max_length=255, description="Empresa")
     UNIDADE: Optional[str] = Field(None, max_length=20, description="Unidade de medida")
     VALOR: Optional[float] = Field(None, description="Valor do produto")
-    DENSIDADE: Optional[float] = Field(None, description="Densidade do produto")
 
 class MercadoGasSaida(MercadoGasBase):
     """Schema para resposta de MercadoGas"""

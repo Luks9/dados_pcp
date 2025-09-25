@@ -24,8 +24,7 @@ class MercadoGasRepository:
             LOCAL=dados.LOCAL,
             UNIDADE=dados.UNIDADE,
             VALOR=dados.VALOR,
-            DENSIDADE=dados.DENSIDADE,
-            DESCRICAO=dados.DESCRICAO
+            EMPRESA=dados.EMPRESA
         )
         self.db.add(db_obj)
         self.db.commit()
@@ -61,7 +60,7 @@ class MercadoGasRepository:
             registro_existente.LOCAL = dados.LOCAL
             registro_existente.UNIDADE = dados.UNIDADE
             registro_existente.VALOR = dados.VALOR
-            registro_existente.DENSIDADE = dados.DENSIDADE
+            registro_existente.EMPRESA = dados.EMPRESA
 
             self.db.commit()
             self.db.refresh(registro_existente)

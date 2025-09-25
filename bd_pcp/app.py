@@ -5,7 +5,7 @@ from sqlalchemy import text
 from bd_pcp.routers import gas_rotas, usuario_autenticacao
 
 app = FastAPI(
-    title="API PCP DADOS"
+    title="API PCP"
 )
 
 
@@ -22,4 +22,4 @@ def read_root():
     except Exception as e:
         print(settings.DATABASE_URL)
         print("Erro ao conectar ao banco de dados:", e)
-    return {"Hello": "World" }
+    return {"PCP": "BI" }
