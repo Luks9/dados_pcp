@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "bd-pcp"
+version = "0.1.0"
+description = ""
+authors = ["Lucas Alves <jose.nunes@njb.com.br>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = {extras = ["standard"], version = "^0.116.1"}
+pydantic-settings = "^2.10.1"
+sqlalchemy = "^2.0.43"
+taskipy = "^1.14.1"
+alembic = "^1.16.5"
+pyodbc = "^5.2.0"
+pyjwt = "^2.10.1"
+python-jose = {extras = ["cryptography"], version = "^3.5.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.20"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.taskipy.tasks]
+run = 'uvicorn bd_pcp.app:app --reload'
