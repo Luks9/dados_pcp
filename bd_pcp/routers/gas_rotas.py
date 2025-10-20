@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Set, Tuple
+from typing import List
 
 from bd_pcp.core.security import get_current_user
 from bd_pcp.core.session import get_db
@@ -21,27 +21,17 @@ def validar_payload(dados: List[MercadoGasCriacao]) -> None:
             detail="Lista de registros vazia."
         )
 
-    combinacoes: Set[Tuple[str, str, str, str]] = set()
-
     for indice, item in enumerate(dados, start=1):
         planilha = item.PLANILHA.strip()
         aba = item.ABA.strip()
         produto = item.PRODUTO.strip()
         unidade = item.UNIDADE.strip()
-        chave = (str(item.DATA), planilha.lower(), aba.lower(), produto.lower())
 
         if not all([planilha, aba, produto, unidade]):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Item {indice}: campos PLANILHA, ABA, PRODUTO e UNIDADE nao podem ser vazios."
             )
-
-        if chave in combinacoes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Item {indice}: registro duplicado para a combinacao DATA/PLANILHA/ABA/PRODUTO."
-            )
-        combinacoes.add(chave)
 
 
 @router.post("/upsert", status_code=status.HTTP_200_OK)
@@ -51,23 +41,27 @@ async def criar_ou_atualizar_mercado_gas(
     current_user = Depends(get_current_user)
 ):
     """
-    Cria novos registros ou atualiza existentes baseado em:
-    - Data
-    - Planilha
-    - Aba
-    - Produto
-
-    Se ja existir um registro com essas caracteristicas, ele sera atualizado.
-    Caso contrario, um novo registro sera criado.
+    Atualiza ATUALIZADO_EM dos registros existentes com a mesma combinacao
+    data/planilha/aba antes de adicionar novos registros do payload.
     """
     validar_payload(dados)
 
     try:
         repositorio = MercadoGasRepository(db)
         resultados = []
+        combos_atualizados = set()
 
         for item in dados:
-            resultado = repositorio.upsert(item)
+            chave = (item.DATA, item.PLANILHA, item.ABA)
+            if chave not in combos_atualizados:
+                repositorio.atualizar_atualizado_em_por_planilha_aba_data(
+                    data=item.DATA,
+                    planilha=item.PLANILHA,
+                    aba=item.ABA,
+                )
+                combos_atualizados.add(chave)
+
+            resultado = repositorio.criar(item)
             resultados.append(MercadoGasSaida.model_validate(resultado))
 
         return {"total_processados": len(resultados)}
@@ -79,4 +73,3 @@ async def criar_ou_atualizar_mercado_gas(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao processar dados: {str(e)}"
         )
-
