@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
+from typing import List
 
 from bd_pcp.db.models.mercado_gas import MercadoGas
 from bd_pcp.schemas.mercado_gas_schema import MercadoGasCriacao
@@ -54,3 +55,15 @@ class MercadoGasRepository:
         if count:
             # Garante que a atualizacao seja enviada antes de inserir novos registros.
             self.db.flush()
+
+    def listar(
+        self,
+        apenas_sem_atualizacao: bool = False,
+    ) -> List[MercadoGas]:
+        """Retorna registros, opcionalmente filtrando os sem ATUALIZADO_EM."""
+        consulta = self.db.query(self.model)
+
+        if apenas_sem_atualizacao:
+            consulta = consulta.filter(self.model.ATUALIZADO_EM.is_(None))
+
+        return consulta.order_by(self.model.DATA.desc()).all()
