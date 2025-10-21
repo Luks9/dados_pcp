@@ -16,20 +16,38 @@ class MercadoGasRepository:
 
     def criar(self, dados: MercadoGasCriacao) -> MercadoGas:
         """Cria um novo registro de MercadoGas."""
-        db_obj = self.model(
-            DATA=dados.DATA,
-            PLANILHA=dados.PLANILHA,
-            ABA=dados.ABA,
-            PRODUTO=dados.PRODUTO,
-            LOCAL=dados.LOCAL,
-            UNIDADE=dados.UNIDADE,
-            VALOR=dados.VALOR,
-            EMPRESA=dados.EMPRESA,
-        )
-        self.db.add(db_obj)
-        self.db.commit()
-        self.db.refresh(db_obj)
-        return db_obj
+        return self.criar_em_lote([dados])[0]
+
+    def criar_em_lote(self, dados_lista: List[MercadoGasCriacao]) -> List[MercadoGas]:
+        """Cria vários registros de MercadoGas em uma única operação."""
+        if not dados_lista:
+            return []
+
+        objetos = [
+            self.model(
+                DATA=dados.DATA,
+                PLANILHA=dados.PLANILHA,
+                ABA=dados.ABA,
+                PRODUTO=dados.PRODUTO,
+                LOCAL=dados.LOCAL,
+                UNIDADE=dados.UNIDADE,
+                VALOR=dados.VALOR,
+                EMPRESA=dados.EMPRESA,
+            )
+            for dados in dados_lista
+        ]
+
+        try:
+            self.db.add_all(objetos)
+            self.db.commit()
+        except Exception:
+            self.db.rollback()
+            raise
+
+        for objeto in objetos:
+            self.db.refresh(objeto)
+
+        return objetos
 
     def atualizar_atualizado_em_por_planilha_aba_data(
         self,

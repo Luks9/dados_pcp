@@ -71,8 +71,8 @@ async def criar_ou_atualizar_mercado_gas(
 
     try:
         repositorio = MercadoGasRepository(db)
-        resultados = []
         combos_atualizados = set()
+        registros_para_criacao: List[MercadoGasCriacao] = []
 
         for item in dados:
             chave = (item.DATA, item.PLANILHA, item.ABA)
@@ -84,14 +84,18 @@ async def criar_ou_atualizar_mercado_gas(
                 )
                 combos_atualizados.add(chave)
 
-            resultado = repositorio.criar(item)
-            resultados.append(MercadoGasSaida.model_validate(resultado))
+            registros_para_criacao.append(item)
+
+        criados = repositorio.criar_em_lote(registros_para_criacao)
+        resultados = [MercadoGasSaida.model_validate(resultado) for resultado in criados]
 
         return {"total_processados": len(resultados)}
 
     except HTTPException:
+        db.rollback()
         raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao processar dados: {str(e)}"
