@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from bd_pcp.db.models.mercado_gas import MercadoGas
@@ -36,6 +37,9 @@ class MercadoGasRepository:
         aba: str,
     ) -> None:
         """Atualiza ATUALIZADO_EM para registros existentes combinando data/planilha/aba."""
+        
+        fuso_fortaleza = ZoneInfo("America/Fortaleza")
+        
         count = (
             self.db.query(self.model)
             .filter(
@@ -44,7 +48,7 @@ class MercadoGasRepository:
                 self.model.ABA == aba,
                 self.model.ATUALIZADO_EM.is_(None),
             )
-            .update({self.model.ATUALIZADO_EM: datetime.utcnow()}, synchronize_session=False)
+            .update({self.model.ATUALIZADO_EM: datetime.now(fuso_fortaleza)}, synchronize_session=False)
         )
 
         if count:
