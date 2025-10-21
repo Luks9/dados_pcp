@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -32,6 +32,29 @@ def validar_payload(dados: List[MercadoGasCriacao]) -> None:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Item {indice}: campos PLANILHA, ABA, PRODUTO e UNIDADE nao podem ser vazios."
             )
+
+
+@router.get("/", response_model=List[MercadoGasSaida])
+async def listar_mercado_gas(
+    apenas_sem_atualizacao: bool = Query(
+        False,
+        description="Quando verdadeiro, retorna somente registros sem data de atualizacao.",
+    ),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    """Retorna registros de MercadoGas, com filtro opcional por ATUALIZADO_EM."""
+    try:
+        repositorio = MercadoGasRepository(db)
+        registros = repositorio.listar(apenas_sem_atualizacao=apenas_sem_atualizacao)
+        return [MercadoGasSaida.model_validate(item) for item in registros]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar dados: {str(e)}",
+        )
 
 
 @router.post("/upsert", status_code=status.HTTP_200_OK)

@@ -17,6 +17,7 @@ pyjwt = "^2.10.1"
 python-jose = {extras = ["cryptography"], version = "^3.5.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.20"
+tzdata = "^2025.2"
 
 
 [build-system]
