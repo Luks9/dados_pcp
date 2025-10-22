@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List
+import time
 
 from bd_pcp.core.security import get_current_user
 from bd_pcp.core.session import get_db
@@ -45,8 +46,11 @@ async def listar_mercado_gas(
 ):
     """Retorna registros de MercadoGas, com filtro opcional por ATUALIZADO_EM."""
     try:
+        start = time.perf_counter()
         repositorio = MercadoGasRepository(db)
         registros = repositorio.listar(apenas_sem_atualizacao=apenas_sem_atualizacao)
+        end = time.perf_counter()
+        print(f"Tempo total da query: {(end - start)*1000:.2f} ms")
         return [MercadoGasSaida.model_validate(item) for item in registros]
     except HTTPException:
         raise

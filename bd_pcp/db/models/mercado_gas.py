@@ -1,9 +1,17 @@
 from bd_pcp.db.models.model_base import Base
-from sqlalchemy import Column, Integer, String, Float, Date, func, DateTime
+from sqlalchemy import Column, Integer, String, Float, Date, func, DateTime, Index
 
 
 class MercadoGas(Base):
     __tablename__ = "MERCADO_GAS"
+    __table_args__ = (
+        Index(
+            "ix_mercado_gas_data_planilha_aba",
+            "DATA",
+            "PLANILHA",
+            "ABA",
+        ),
+    )
 
     ID = Column(Integer, primary_key=True, index=True, autoincrement=True)
     DATA = Column(Date, nullable=False)

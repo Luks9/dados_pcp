@@ -18,14 +18,16 @@ DATABASE_URL = f"mssql+pyodbc:///?odbc_connect={quote_plus(connection_string)}"
 
 # Criação da engine para o banco de dados
 engine = create_engine(
-    DATABASE_URL
-    )
+    DATABASE_URL,
+    fast_executemany=True,
+    pool_pre_ping=True,
+)
 
 SessionLocal = sessionmaker(
     autocommit=False, 
     autoflush=False, 
     bind=engine
-    )
+)
 
 # Função para obter a sessão do banco
 def get_db():
@@ -41,7 +43,8 @@ def create_tables():
     Criando todas as tabelas no banco de dados
     Importe a(s) tabela(s) que deseja criar
     '''
-    from bd_pcp.db.models.usuario import Usuario  # Importe suas tabelas aqui
+    #from bd_pcp.db.models.usuario import Usuario  # Importe suas tabelas aqui
+    from bd_pcp.db.models.mercado_gas import MercadoGas 
     try:
         Base.metadata.create_all(bind=engine)
         print("Tabelas criadas com sucesso!")
