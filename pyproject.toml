@@ -18,6 +18,8 @@ python-jose = {extras = ["cryptography"], version = "^3.5.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.20"
 tzdata = "^2025.2"
+pandas = "^2.3.3"
+xlsxwriter = "^3.2.9"
 
 
 [build-system]

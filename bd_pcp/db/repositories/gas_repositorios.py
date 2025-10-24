@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 from typing import List
 
 from bd_pcp.db.models.mercado_gas import MercadoGas
@@ -84,4 +85,12 @@ class MercadoGasRepository:
         if apenas_sem_atualizacao:
             consulta = consulta.filter(self.model.ATUALIZADO_EM.is_(None))
 
+        return consulta.order_by(self.model.DATA.desc()).all()
+
+    def filtro_mes(self, mes: int, ano: int) -> List[MercadoGas]:
+        """Retorna registros filtrando por mês e ano."""
+        consulta = self.db.query(self.model).filter(
+            extract('month', self.model.DATA) == mes,
+            extract('year', self.model.DATA) == ano
+        )
         return consulta.order_by(self.model.DATA.desc()).all()
