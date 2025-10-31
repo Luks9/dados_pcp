@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -15,6 +15,7 @@ from bd_pcp.schemas.mercado_gas_schema import (
     MercadoGasCriacao,
     MercadoGasSaida
 )
+from bd_pcp.services.gas_txt_parser import GasTxtParserError, parse_mercado_gas_upload
 
 router = APIRouter(tags=["Gas"], prefix="/api/gas")
 
@@ -37,7 +38,7 @@ def validar_payload(dados: List[MercadoGasCriacao]) -> None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Item {indice}: campos PLANILHA, ABA, PRODUTO e UNIDADE nao podem ser vazios."
-            )
+        )
 
 
 @router.get("/", response_model=List[MercadoGasSaida])
@@ -108,6 +109,61 @@ async def criar_ou_atualizar_mercado_gas(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao processar dados: {str(e)}"
+        )
+
+
+@router.post(
+    "/upload-txt",
+    status_code=status.HTTP_201_CREATED,
+)
+async def importar_mercado_gas_txt(
+    arquivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    """Importa registros de MercadoGas a partir de um arquivo texto delimitado."""
+    if not arquivo.filename.lower().endswith(".txt"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="O arquivo deve ter a extensão .txt.",
+        )
+
+    conteudo_bruto = await arquivo.read()
+
+    try:
+        registros = parse_mercado_gas_upload(conteudo_bruto)
+    except GasTxtParserError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=exc.detail,
+        )
+
+    validar_payload(registros)
+
+    try:
+        repositorio = MercadoGasRepository(db)
+        combos_atualizados = set()
+
+        for item in registros:
+            chave = (item.DATA, item.PLANILHA, item.ABA)
+            if chave not in combos_atualizados:
+                repositorio.atualizar_atualizado_em_por_planilha_aba_data(
+                    data=item.DATA,
+                    planilha=item.PLANILHA,
+                    aba=item.ABA,
+                )
+                combos_atualizados.add(chave)
+        criados = repositorio.criar_em_lote(registros)
+        return {"total_processados": len(criados), "arquivo": arquivo.filename}
+
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao importar arquivo: {str(e)}"
         )
 
 @router.get("/exportar-excel", response_model=bytes)
